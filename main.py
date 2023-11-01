@@ -35,11 +35,8 @@ async def process_frames(websocket: WebSocket):
         # conver cls to class names using results_list.names
         cls = [results_list.names[i] for i in cls]
         
-        # Send back the results
-        await websocket.send_text(f"{xyxy},{conf},{cls}")
-        
         # Send back the results as json
-        # await websocket.send_json({"xyxy": xyxy, "conf": conf, "cls": cls})
+        await websocket.send_json({"xyxy": xyxy, "conf": conf, "cls": cls})
 
 if __name__ == "__main__":
     import uvicorn
