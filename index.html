@@ -40,6 +40,8 @@
         ws.onmessage = (event) => {
             let data = JSON.parse(event.data);
             const boxes = data["xyxy"];
+            const confidences = data["conf"];
+            const classes = data["cls"];
             
             // Clear previous rectangles and draw video frame again
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -51,6 +53,12 @@
                 ctx.strokeStyle = "red";
                 ctx.lineWidth = 2;
                 ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+
+                // Draw label and confidence on top of the rectangle
+                const text = classes[i] + " " + confidences[i].toFixed(2);
+                ctx.font = "16px Arial";
+                ctx.fillStyle = "red";
+                ctx.fillText(text, x1, y1 - 5);
             }
         };
     }
