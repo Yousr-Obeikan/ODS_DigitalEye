@@ -7,9 +7,9 @@
 </head>
 <body>
 
-<video id="video" width="640" height="480" autoplay></video>
+<video id="video" width="320" height="240" autoplay></video>
 <button id="startButton">Start</button>
-<canvas id="canvas" width="640" height="480"></canvas>
+<canvas id="canvas" width="320" height="240"></canvas>
 
 <script>
     const video = document.getElementById('video');
@@ -21,7 +21,7 @@
     // Access webcam
     async function init() {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: {} });
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 320, height: 240 } });
             video.srcObject = stream;
             startCapture();
         } catch (e) {
@@ -35,7 +35,7 @@
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
             const frame = canvas.toDataURL('image/jpeg');
             ws.send(frame);
-        }, 100); // Capture every 100ms
+        }, 500); // Capture every 500ms
 
         ws.onmessage = (event) => {
             let data = JSON.parse(event.data);
