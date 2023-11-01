@@ -17,17 +17,29 @@ async def process_frames(websocket: WebSocket):
         data = await websocket.receive_text()
         frame_bytes = base64.b64decode(data.split(",")[-1])
         frame = cv2.imdecode(np.frombuffer(frame_bytes, np.uint8), cv2.IMREAD_COLOR)
+        # other option Receive frame from client as bytes
+        # data = await websocket.receive_bytes()
+        # frame = cv2.imdecode(np.frombuffer(data, np.uint8), cv2.IMREAD_COLOR)
 
         # Process frame with YOLOv8 model
-        results_list = model(frame)
+        results_list = model(frame)[0]
         
-        # Assuming results_list[0] contains the desired results
-        xyxy = results_list[0].boxes.xyxy
-        conf = results_list[0].boxes.conf
-        cls = results_list[0].boxes.cls
+        # Assuming results_list contains the desired results
+        xyxy = results_list.boxes.xyxy.tolist()
+        conf = results_list.boxes.conf.tolist()
+        cls = results_list.boxes.cls.tolist()
+        
+        # convert cls list of floats to list of ints
+        cls = list(map(int, cls))
+        
+        # conver cls to class names using results_list.names
+        cls = [results_list.names[i] for i in cls]
         
         # Send back the results
-        await websocket.send_text(f"{xyxy.tolist()},{conf.tolist()},{cls.tolist()}")
+        await websocket.send_text(f"{xyxy},{conf},{cls}")
+        
+        # Send back the results as json
+        # await websocket.send_json({"xyxy": xyxy, "conf": conf, "cls": cls})
 
 if __name__ == "__main__":
     import uvicorn
