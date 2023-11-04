@@ -6,8 +6,18 @@ import base64
 
 app = FastAPI()
 
+user_selected_model = int(input("""Select a model:
+1 - Hardhat
+2 - Smoke
+3 - Hairnet
+"""))
+MODELS = {
+    1: "model/best_hardhat.pt",
+    2: "model/best_smoke.pt",
+    3: "model/best_hairnet.pt"
+}
 # Load the YOLOv8 model
-model = YOLO('model/best.pt')
+model = YOLO(MODELS[user_selected_model])
 
 @app.websocket("/ws")
 async def process_frames(websocket: WebSocket):
