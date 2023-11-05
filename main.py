@@ -32,18 +32,18 @@ async def process_frames(websocket: WebSocket):
         # frame = cv2.imdecode(np.frombuffer(data, np.uint8), cv2.IMREAD_COLOR)
 
         # Process frame with YOLOv8 model
-        results_list = model(frame)[0]
+        results = model(frame)[0]
         
-        # Assuming results_list contains the desired results
-        xyxy = results_list.boxes.xyxy.tolist()
-        conf = results_list.boxes.conf.tolist()
-        cls = results_list.boxes.cls.tolist()
+        # Assuming results contains the desired results
+        xyxy = results.boxes.xyxy.tolist()
+        conf = results.boxes.conf.tolist()
+        cls = results.boxes.cls.tolist()
         
         # convert cls list of floats to list of ints
         cls = list(map(int, cls))
         
-        # conver cls to class names using results_list.names
-        cls = [results_list.names[i] for i in cls]
+        # conver cls to class names using results.names
+        cls = [results.names[i] for i in cls]
         
         # Send back the results as json
         await websocket.send_json({"xyxy": xyxy, "conf": conf, "cls": cls})
