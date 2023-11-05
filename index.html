@@ -33,13 +33,13 @@
 
         // Capture frames and send to the server
         function startCapture() {
-            setInterval(() => {
+            // Capture frames and send to the server
+            function captureAndSendFrame() {
                 ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
                 canvas.toBlob(function (blob) {
                     ws.send(blob);
                 }, 'image/jpeg');
-
-            }, 500); // Capture every 500ms
+            }
 
             ws.onmessage = (event) => {
                 let data = JSON.parse(event.data);
@@ -64,7 +64,13 @@
                     ctx.fillStyle = "red";
                     ctx.fillText(text, x1, y1 - 5);
                 }
+
+                // Capture and send next frame
+                // Wait for 50ms before sending the next frame
+                setTimeout(captureAndSendFrame, 50);
             };
+            // Call this function to start the process
+            captureAndSendFrame();
         }
 
         startButton.addEventListener('click', init);
