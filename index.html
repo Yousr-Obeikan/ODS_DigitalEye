@@ -52,16 +52,22 @@
                 ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
                 // Parse the results and draw rectangles
+                ctx.font = "16px Arial";
+                ctx.lineWidth = 2;
                 for (let i = 0; i < boxes.length; i++) {
                     const [x1, y1, x2, y2] = boxes[i];
-                    ctx.strokeStyle = "red";
-                    ctx.lineWidth = 2;
+                    if (classes[i] == "Hardhat"){
+                        ctx.strokeStyle = "green";
+                        ctx.fillStyle = "green";
+                    }
+                    else{
+                        ctx.strokeStyle = "red";
+                        ctx.fillStyle = "red";
+                    }                        
                     ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
 
                     // Draw label and confidence on top of the rectangle
                     const text = classes[i] + " " + confidences[i].toFixed(2);
-                    ctx.font = "16px Arial";
-                    ctx.fillStyle = "red";
                     ctx.fillText(text, x1, y1 - 5);
                 }
 
