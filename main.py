@@ -23,13 +23,10 @@ model = YOLO(MODELS[user_selected_model])
 async def process_frames(websocket: WebSocket):
     await websocket.accept()
     while True:
-        # Receive frame from client
-        data = await websocket.receive_text()
-        frame_bytes = base64.b64decode(data.split(",")[-1])
-        frame = cv2.imdecode(np.frombuffer(frame_bytes, np.uint8), cv2.IMREAD_COLOR)
-        # other option Receive frame from client as bytes
-        # data = await websocket.receive_bytes()
-        # frame = cv2.imdecode(np.frombuffer(data, np.uint8), cv2.IMREAD_COLOR)
+
+        # Receive frame from client as bytes
+        data = await websocket.receive_bytes()
+        frame = cv2.imdecode(np.frombuffer(data, np.uint8), cv2.IMREAD_COLOR)
 
         # Process frame with YOLOv8 model
         results = model(frame)[0]

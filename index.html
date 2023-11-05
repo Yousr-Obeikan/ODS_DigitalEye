@@ -1,70 +1,75 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Camera Stream with Detections</title>
 </head>
+
 <body>
 
-<video id="video" width="320" height="240" autoplay></video>
-<button id="startButton">Start</button>
-<canvas id="canvas" width="320" height="240"></canvas>
+    <video id="video" width="320" height="240" autoplay></video>
+    <button id="startButton">Start</button>
+    <canvas id="canvas" width="320" height="240"></canvas>
 
-<script>
-    const video = document.getElementById('video');
-    const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
-    const startButton = document.getElementById('startButton');
-    const ws = new WebSocket('ws://localhost:8000/ws');
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const startButton = document.getElementById('startButton');
+        const ws = new WebSocket('ws://localhost:8000/ws');
 
-    // Access webcam
-    async function init() {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 320, height: 240 } });
-            video.srcObject = stream;
-            startCapture();
-        } catch (e) {
-            console.error("Error accessing webcam:", e);
-        }
-    }
-
-    // Capture frames and send to the server
-    function startCapture() {
-        setInterval(() => {
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            const frame = canvas.toDataURL('image/jpeg');
-            ws.send(frame);
-        }, 500); // Capture every 500ms
-
-        ws.onmessage = (event) => {
-            let data = JSON.parse(event.data);
-            const boxes = data["xyxy"];
-            const confidences = data["conf"];
-            const classes = data["cls"];
-            
-            // Clear previous rectangles and draw video frame again
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-            // Parse the results and draw rectangles
-            for (let i = 0; i < boxes.length; i++) {
-                const [x1, y1, x2, y2] = boxes[i];
-                ctx.strokeStyle = "red";
-                ctx.lineWidth = 2;
-                ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
-
-                // Draw label and confidence on top of the rectangle
-                const text = classes[i] + " " + confidences[i].toFixed(2);
-                ctx.font = "16px Arial";
-                ctx.fillStyle = "red";
-                ctx.fillText(text, x1, y1 - 5);
+        // Access webcam
+        async function init() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 320, height: 240 } });
+                video.srcObject = stream;
+                startCapture();
+            } catch (e) {
+                console.error("Error accessing webcam:", e);
             }
-        };
-    }
+        }
 
-    startButton.addEventListener('click', init);
-</script>
+        // Capture frames and send to the server
+        function startCapture() {
+            setInterval(() => {
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                canvas.toBlob(function (blob) {
+                    ws.send(blob);
+                }, 'image/jpeg');
+
+            }, 500); // Capture every 500ms
+
+            ws.onmessage = (event) => {
+                let data = JSON.parse(event.data);
+                const boxes = data["xyxy"];
+                const confidences = data["conf"];
+                const classes = data["cls"];
+
+                // Clear previous rectangles and draw video frame again
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                // Parse the results and draw rectangles
+                for (let i = 0; i < boxes.length; i++) {
+                    const [x1, y1, x2, y2] = boxes[i];
+                    ctx.strokeStyle = "red";
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+
+                    // Draw label and confidence on top of the rectangle
+                    const text = classes[i] + " " + confidences[i].toFixed(2);
+                    ctx.font = "16px Arial";
+                    ctx.fillStyle = "red";
+                    ctx.fillText(text, x1, y1 - 5);
+                }
+            };
+        }
+
+        startButton.addEventListener('click', init);
+    </script>
 
 </body>
+
 </html>
