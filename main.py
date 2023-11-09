@@ -3,8 +3,16 @@ from ultralytics import YOLO
 import cv2
 import numpy as np
 import base64
+import datetime
+import httpx
+from PIL import Image
+import base64
+from io import BytesIO
+
 
 app = FastAPI()
+report_url = "https://hodhod-dev-bk-core-testing.azurewebsites.net/apiSmartMonitoring/Voilation/voilationFromVendor"
+headers = {"HodHodApiKey": "pgH7QzFHJx4w46fI~5Uzi4RvtTwlEXp"}
 
 user_selected_model = int(input("""Select a model:
 1 - Hardhat
@@ -18,6 +26,8 @@ MODELS = {
 }
 # Load the YOLOv8 model
 model = YOLO(MODELS[user_selected_model])
+print("Model Loaded")
+print("Classes", model.names)
 
 @app.websocket("/ws")
 async def process_frames(websocket: WebSocket):
@@ -42,6 +52,29 @@ async def process_frames(websocket: WebSocket):
         # conver cls to class names using results.names
         cls = [results.names[i] for i in cls]
         
+        # report send here
+        for i in cls:
+            if i == "NO-Hardhat" or i == "no_hairnet" or i == "smoke":
+                resulted_image = Image.fromarray(results.plot()[..., ::-1])
+                buffered = BytesIO()
+                resulted_image.save(buffered, format="JPEG")
+                data = buffered.getvalue()
+                image_base64 = "!!" + base64.b64encode(data).decode('utf-8') + "!"
+                time = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+                data = {
+                    "cameraId": 4,
+                    # send the image as base64 string
+                    "picture": image_base64,
+                    # get the current time in this format "2023-11-08T14:37:37.853Z"
+                    "timeDate": time,
+                    "voilationName": i,
+                }
+
+                response = httpx.post(report_url,headers=headers,json=data)
+                print(response.json())
+                break
+
+
         # Send back the results as json
         await websocket.send_json({"xyxy": xyxy, "conf": conf, "cls": cls})
 
